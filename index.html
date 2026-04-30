@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Contractor Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0e0f11;
+      --surface:      #16181c;
+      --surface-2:    #1e2126;
+      --surface-3:    #252a32;
+      --border:       rgba(255,255,255,0.07);
+      --border-hi:    rgba(255,255,255,0.13);
+      --text:         #f0ede8;
+      --text-2:       #9a9590;
+      --text-3:       #5a5550;
+      --accent:       #2d6a4f;
+      --accent-hi:    #40916c;
+      --accent-bright:#52b788;
+      --accent-dim:   rgba(45,106,79,0.18);
+      --accent-txt:   #b7e4c7;
+      --red:          #ff5f5f;
+      --red-dim:      rgba(255,95,95,0.12);
+      --orange:       #ff8c42;
+      --orange-dim:   rgba(255,140,66,0.14);
+      --orange-bdr:   rgba(255,140,66,0.28);
+      --green:        #52b788;
+      --green-dim:    rgba(82,183,136,0.14);
+      --blue:         #60a5fa;
+      --blue-dim:     rgba(96,165,250,0.12);
+      --purple:       #a78bfa;
+      --purple-dim:   rgba(167,139,250,0.12);
+      --r:            12px;
+      --r-sm:         8px;
+      --r-lg:         18px;
+      --fd:           'Syne', sans-serif;
+      --fb:           'Instrument Sans', system-ui, sans-serif;
+      --sw:           260px;
+      --tab-h:        60px;
+      --top-h:        58px;
+      --safe-b:       env(safe-area-inset-bottom, 0px);
+    }
+
+    html { height: 100%; }
+    body {
+      font-family: var(--fb); background: var(--bg); color: var(--text);
+      height: 100%; overflow: hidden; -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ─────────────────────────────────────────
+       AUTH
+    ───────────────────────────────────────── */
+    #auth {
+      position: fixed; inset: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg); padding: 20px;
+      overflow-y: auto;
+    }
+    #auth.gone { display: none; }
+
+    .auth-wrap { width: 100%; max-width: 400px; animation: fadeUp .35s ease; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    .auth-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+    .auth-logo-icon {
+      width: 44px; height: 44px; background: var(--accent); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      color: var(--accent-txt);
+    }
+    .auth-logo-name { font-family: var(--fd); font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
+    .auth-logo-tag  { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin-top: 1px; }
+
+    .auth-heading { font-family: var(--fd); font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -.02em; margin-bottom: 6px; }
+    .auth-sub { font-size: 14px; color: var(--text-3); margin-bottom: 28px; line-height: 1.55; }
+
+    .auth-screen { display: none; }
+    .auth-screen.active { display: block; }
+
+    .af { margin-bottom: 14px; }
+    .af label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; letter-spacing: .02em; }
+    .af input {
+      width: 100%; background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--r-sm); padding: 13px 14px; color: var(--text);
+      font-family: var(--fb); font-size: 16px; outline: none;
+      transition: border-color .15s; -webkit-appearance: none;
+    }
+    .af input::placeholder { color: var(--text-3); }
+    .af input:focus { border-color: var(--accent-bright); background: var(--surface-2); }
+    .af-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .auth-err { display: none; background: var(--red-dim); border: 1px solid rgba(255,95,95,.25); border-radius: var(--r-sm); padding: 10px 14px; font-size: 13px; color: var(--red); margin-bottom: 14px; }
+    .auth-err.on { display: block; }
+
+    .strength-bar { height: 3px; background: var(--surface-3); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .strength-fill { height: 100%; width: 0; border-radius: 2px; transition: all .3s; }
+    .strength-lbl { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+    .auth-btn {
+      width: 100%; padding: 14px; margin-top: 6px; border: none; border-radius: var(--r-sm);
+      background: var(--accent); color: var(--accent-txt);
+      font-family: var(--fd); font-size: 16px; font-weight: 700; cursor: pointer;
+      transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+      -webkit-appearance: none;
+    }
+    .auth-btn:active { background: var(--accent-hi); transform: scale(.98); }
+    .auth-btn:disabled { opacity: .5; }
+
+    .auth-switch { text-align: center; font-size: 14px; color: var(--text-3); margin-top: 22px; }
+    .auth-switch a { color: var(--accent-bright); cursor: pointer; font-weight: 600; }
+
+    /* ─────────────────────────────────────────
+       APP SHELL
+    ───────────────────────────────────────── */
+    #app { display: none; height: 100%; flex-direction: row; }
+    #app.on { display: flex; }
+
+    /* SIDEBAR — desktop only */
+    .sidebar {
+      width: var(--sw); flex-shrink: 0; background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    }
+    .sb-logo { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .sb-logo-row { display: flex; align-items: center; gap: 10px; }
+    .sb-logo-icon {
+      width: 32px; height: 32px; background: var(--accent); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--accent-txt);
+    }
+    .sb-logo-name { font-family: var(--fd); font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
+    .sb-logo-tag  { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
+    .sb-nav { padding: 10px 10px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+    .sb-lbl { font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .1em; padding: 10px 12px 4px; }
+    .sb-btn {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: var(--r-sm); border: none; background: transparent;
+      color: var(--text-2); font-family: var(--fb); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all .15s; width: 100%; text-align: left;
+    }
+    .sb-btn:hover { background: var(--surface-2); color: var(--text); }
+    .sb-btn.on { background: var(--accent-dim); color: var(--accent-bright); }
+    .sb-btn.leads-nav.on { background: var(--orange-dim); color: var(--orange); }
+    .sb-badge {
+      margin-left: auto; background: var(--orange); color: #fff;
+      border-radius: 20px; padding: 1px 7px; font-size: 10px; font-weight: 700;
+    }
+    .sb-foot {
+      margin-top: auto; padding: 14px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+    .sb-user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .sb-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--fd); font-size: 12px; font-weight: 700; color: var(--accent-txt); flex-shrink: 0;
+    }
+    .sb-uname  { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sb-uemail { font-size: 11px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sb-stats { padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+    .stat-lbl { font-size: 12px; color: var(--text-3); }
+    .stat-val { font-size: 13px; font-weight: 600; font-family: var(--fd); color: var(--text); }
+    .stat-val.g { color: var(--accent-bright); }
+    .stat-val.o { color: var(--orange); }
+    .logout-btn {
+      width: 100%; padding: 7px 10px; border-radius: var(--r-sm); border: none;
+      background: transparent; color: var(--text-3); font-family: var(--fb); font-size: 13px;
+      cursor: pointer; text-align: left; display: flex; align-items: center; gap: 7px; transition: all .15s;
+    }
+    .logout-btn:hover { background: var(--red-dim); color: var(--red); }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; min-width: 0; }
+
+    /* TOPBAR */
+    .topbar {
+      height: var(--top-h); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 22px; gap: 12px;
+      flex-shrink: 0; background: var(--bg);
+    }
+    .topbar-title { font-family: var(--fd); font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.02em; white-space: nowrap; flex: 1; }
+    .search-wrap { position: relative; }
+    .search-input {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 8px 12px 8px 34px; color: var(--text); font-family: var(--fb); font-size: 13px;
+      outline: none; width: 240px; transition: border-color .15s;
+    }
+    .search-input:focus { border-color: var(--border-hi); }
+    .search-input::placeholder { color: var(--text-3); }
+    .search-ico { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 13px; pointer-events: none; }
+    .tb-actions { display: flex; align-items: center; gap: 8px; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px;
+      border-radius: var(--r-sm); border: none; font-family: var(--fb); font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-txt); font-weight: 600; }
+    .btn-primary:hover { background: var(--accent-hi); }
+    .btn-ghost { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-hi); }
+    .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,95,95,.2); }
+    .btn-danger:hover { background: rgba(255,95,95,.2); }
+    .icon-btn {
+      width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent;
+      color: var(--text-3); font-size: 13px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: all .15s;
+    }
+    .icon-btn:hover { background: var(--surface-3); color: var(--text); }
+    .icon-btn.del:hover { background: var(--red-dim); color: var(--red); }
+
+    /* PANELS */
+    .panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .panel.on { display: flex; }
+    .scroll { flex: 1; overflow-y: auto; padding: 18px 22px; -webkit-overflow-scrolling: touch; }
+
+    /* CONTACTS */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px,1fr)); gap: 12px; }
+    @keyframes cardIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .contact-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 16px; cursor: pointer; transition: all .2s; animation: cardIn .3s ease both;
+      position: relative; overflow: hidden;
+    }
+    .contact-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:var(--accent-bright); opacity:0; transition:opacity .2s; }
+    .contact-card:hover { border-color: var(--border-hi); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .contact-card:hover::before { opacity: 1; }
+    .card-hd { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 10px; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center;
+      justify-content: center; font-family: var(--fd); font-size: 14px; font-weight: 700;
+      color: #0e0f11; flex-shrink: 0;
+    }
+    .card-name  { font-family: var(--fd); font-weight: 700; font-size: 14px; color: var(--text); }
+    .card-email { font-size: 12px; color: var(--text-3); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+    .card-acts  { margin-left: auto; display: flex; gap: 3px; }
+    .card-info  { display: flex; flex-direction: column; gap: 4px; }
+    .info-row   { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-2); }
+    .card-notes { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-3); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-3); padding: 40px 24px; text-align: center; }
+    .empty-ico   { font-size: 42px; opacity: .4; }
+    .empty-title { font-family: var(--fd); font-size: 18px; font-weight: 700; color: var(--text-2); }
+    .empty-sub   { font-size: 14px; max-width: 260px; line-height: 1.6; }
+
+    /* MAP */
+    .map-wrap { flex: 1; position: relative; overflow: hidden; }
+    .map-wrap iframe { position: absolute; top: -60px; left: 0; right: 0; width: 100%; height: calc(100% + 60px); border: none; }
+
+    /* LEADS */
+    .leads-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .live-banner {
+      margin: 12px 22px 0; background: var(--green-dim); border: 1px solid rgba(82,183,136,.2);
+      border-radius: var(--r-sm); padding: 9px 13px; display: flex; align-items: center; gap: 9px;
+      font-size: 13px; color: var(--green); flex-shrink: 0;
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .filters-row {
+      padding: 10px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .filters-row::-webkit-scrollbar { display: none; }
+    .filt {
+      padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-3); font-family: var(--fb); font-size: 12px;
+      font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .filt.on { background: var(--orange-dim); border-color: var(--orange-bdr); color: var(--orange); font-weight: 600; }
+    .leads-count { margin-left: auto; font-size: 12px; color: var(--text-3); white-space: nowrap; flex-shrink: 0; }
+    .leads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 12px; }
+    .lead-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 16px; transition: all .2s; animation: cardIn .3s ease both; position: relative; overflow: hidden;
+    }
+    .lead-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:var(--orange); }
+    .lead-card:hover { border-color: var(--border-hi); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .lead-card.s-contacted::before { background: var(--blue); }
+    .lead-card.s-qualified::before { background: var(--green); }
+    .lead-card.s-closed::before    { background: var(--purple); }
+    .lead-card.s-lost::before      { background: var(--red); }
+    .lead-top  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+    .lead-name { font-family: var(--fd); font-weight: 700; font-size: 14px; color: var(--text); }
+    .lead-time { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .lead-sw   { position: relative; flex-shrink: 0; }
+    .sbadge {
+      display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; cursor: pointer; border: none; font-family: var(--fb); white-space: nowrap;
+    }
+    .s-new       { background:var(--orange-dim); color:var(--orange);  border:1px solid var(--orange-bdr)!important; }
+    .s-contacted { background:var(--blue-dim);   color:var(--blue);    border:1px solid rgba(96,165,250,.25)!important; }
+    .s-qualified { background:var(--green-dim);  color:var(--green);   border:1px solid rgba(82,183,136,.25)!important; }
+    .s-closed    { background:var(--purple-dim); color:var(--purple);  border:1px solid rgba(167,139,250,.25)!important; }
+    .s-lost      { background:var(--red-dim);    color:var(--red);     border:1px solid rgba(255,95,95,.25)!important; }
+    @keyframes smenu { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .status-menu {
+      position: absolute; top: calc(100% + 4px); right: 0;
+      background: var(--surface-2); border: 1px solid var(--border-hi);
+      border-radius: var(--r-sm); padding: 4px; z-index: 60; min-width: 140px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5); animation: smenu .15s ease;
+    }
+    .smopt { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; color:var(--text-2); }
+    .smopt:hover { background:var(--surface-3); color:var(--text); }
+    .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .lead-fields { display:flex; flex-direction:column; gap:4px; margin-bottom:9px; }
+    .lf  { display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--text-2); line-height:1.4; }
+    .lfi { color:var(--text-3); width:14px; text-align:center; flex-shrink:0; margin-top:1px; font-size:11px; }
+    .lfv { word-break:break-word; }
+    .lead-foot { display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+    .lead-src  { font-size:11px; color:var(--text-3); }
+
+    /* MODALS */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.78); backdrop-filter: blur(5px);
+      z-index: 300; align-items: center; justify-content: center; padding: 20px;
+    }
+    .overlay.on { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--r-lg);
+      padding: 26px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+      animation: mIn .22s ease;
+    }
+    .modal.wide { max-width: 600px; }
+    @keyframes mIn { from{opacity:0;transform:scale(.95) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    .modal-hd { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:18px; gap:10px; }
+    .modal-title { font-family:var(--fd); font-size:19px; font-weight:700; color:var(--text); letter-spacing:-.02em; }
+    .modal-sub   { font-size:13px; color:var(--text-3); margin-top:3px; }
+    .xbtn { width:30px; height:30px; border-radius:8px; border:none; background:var(--surface-3); color:var(--text-2); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
+    .xbtn:hover { color:var(--text); }
+    .fg { margin-bottom: 13px; }
+    .fg label { display:block; font-size:11px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+    .fi {
+      width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-sm);
+      padding:10px 12px; color:var(--text); font-family:var(--fb); font-size:14px; outline:none; transition:border-color .15s;
+    }
+    .fi::placeholder { color:var(--text-3); }
+    .fi:focus { border-color:var(--accent-bright); background:var(--surface-3); }
+    textarea.fi { resize:vertical; min-height:76px; }
+    .fr { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+    .modal-foot { display:flex; gap:9px; justify-content:flex-end; margin-top:18px; padding-top:15px; border-top:1px solid var(--border); }
+    .legend-er { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+    input[type=color] { width:30px; height:30px; border-radius:50%; border:2px solid rgba(255,255,255,.15); padding:2px; cursor:pointer; background:var(--surface-3); flex-shrink:0; }
+    .all-resp { background:var(--surface-2); border-radius:var(--r-sm); padding:12px; margin-top:7px; display:flex; flex-direction:column; gap:9px; }
+    .rrow { display:flex; flex-direction:column; gap:3px; }
+    .rq { font-size:10px; color:var(--text-3); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+    .ra { font-size:13px; color:var(--text); line-height:1.5; }
+
+    /* MISC */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--surface-3); border-radius:3px; }
+    .toast {
+      position:fixed; bottom:22px; right:22px; background:var(--surface-3); border:1px solid var(--border-hi);
+      border-radius:var(--r-sm); padding:11px 16px; font-size:13px; color:var(--text); z-index:400;
+      box-shadow:0 8px 28px rgba(0,0,0,.5); animation:tIn .25s ease; pointer-events:none;
+    }
+    @keyframes tIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ─────────────────────────────────────────
+       MOBILE  ≤ 700 px
+       Sidebar replaced by a bottom tab bar.
+       Everything else mirrors the desktop.
+    ───────────────────────────────────────── */
+    .btab-bar { display: none; }
+
+    @media (max-width: 700px) {
+      /* Hide desktop sidebar entirely */
+      .sidebar { display: none !important; }
+
+      /* App fills screen, column layout */
+      #app.on { flex-direction: column; }
+      .main { height: 100vh; }
+
+      /* Reserve space for fixed bottom bar */
+      .main { padding-bottom: var(--tab-h); }
+
+      /* Topbar tighter */
+      .topbar { padding: 0 14px; gap: 8px; }
+      .topbar-title { font-size: 16px; }
+
+      /* Hide desktop search + action buttons in topbar */
+      .search-wrap { display: none; }
+      .tb-actions  { display: none; }
+
+      /* Content padding tighter */
+      .scroll { padding: 14px 14px; }
+
+      /* Single column cards */
+      .cards-grid  { grid-template-columns: 1fr; gap: 10px; }
+      .leads-grid  { grid-template-columns: 1fr; gap: 10px; }
+
+      /* Cards slimmer */
+      .contact-card { padding: 14px; }
+      .lead-card    { padding: 14px; }
+
+      /* Leads filters — horizontal scroll */
+      .filters-row  { padding: 10px 14px; }
+      .live-banner  { margin: 10px 14px 0; padding: 8px 12px; font-size: 12px; }
+
+      /* Modals as bottom sheets */
+      .overlay { padding: 0; align-items: flex-end; }
+      .modal {
+        border-radius: 20px 20px 0 0; max-width: 100%;
+        max-height: 88vh; padding: 20px 18px 32px;
+        padding-bottom: calc(20px + var(--safe-b));
+      }
+      .modal.wide { max-width: 100%; }
+      .fr { grid-template-columns: 1fr; }
+
+      /* Auth card full width */
+      .auth-wrap { padding: 0; }
+      #auth { align-items: flex-start; padding-top: 32px; }
+      .auth-card-inner { padding: 0 4px; }
+
+      /* Toast top on mobile */
+      .toast { bottom: auto; top: 68px; right: 12px; left: 12px; text-align: center; }
+
+      /* BOTTOM TAB BAR */
+      .btab-bar {
+        display: flex;
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+        height: var(--tab-h);
+        padding-bottom: var(--safe-b);
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+      }
+      .btab {
+        flex: 1; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 3px; border: none; background: transparent;
+        color: var(--text-3); font-family: var(--fb); font-size: 10px; font-weight: 500;
+        cursor: pointer; transition: color .15s; padding: 8px 0; position: relative;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btab.on { color: var(--accent-bright); }
+      .btab.leads-tab.on { color: var(--orange); }
+      .btab-icon { font-size: 21px; line-height: 1; }
+      .btab-badge {
+        position: absolute; top: 5px; right: calc(50% - 22px);
+        background: var(--orange); color: #fff; border-radius: 10px;
+        padding: 1px 5px; font-size: 9px; font-weight: 700; line-height: 1.4;
+      }
+
+      /* Mobile topbar: show search + add buttons as icon buttons */
+      .mob-tb-btns { display: flex; gap: 6px; flex-shrink: 0; }
+      .mob-icon-btn {
+        width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border);
+        background: var(--surface); color: var(--text-2); font-size: 17px;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        transition: all .15s; flex-shrink: 0;
+      }
+      .mob-icon-btn:active { background: var(--surface-2); }
+    }
+
+    /* Hide mobile-only elements on desktop */
+    .mob-tb-btns { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ AUTH (always visible until signed in) ══════════ -->
+<div id="auth">
+  <div class="auth-wrap">
+
+    <!-- LOGIN -->
+    <div class="auth-screen active" id="scr-login">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <div class="auth-logo-name">Contractor Hub</div>
+          <div class="auth-logo-tag">Pro CRM Platform</div>
+        </div>
+      </div>
+      <div class="auth-heading">Welcome back</div>
+      <div class="auth-sub">Sign in to access your dashboard.</div>
+      <div class="auth-err" id="login-err"></div>
+      <div class="af"><label>Email</label><input id="l-email" type="email" placeholder="you@example.com" autocomplete="email" /></div>
+      <div class="af"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password" /></div>
+      <button class="auth-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-switch">No account? <a onclick="show('scr-signup')">Create one free</a></div>
+    </div>
+
+    <!-- SIGN UP -->
+    <div class="auth-screen" id="scr-signup">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <div class="auth-logo-name">Contractor Hub</div>
+          <div class="auth-logo-tag">Pro CRM Platform</div>
+        </div>
+      </div>
+      <div class="auth-heading">Create account</div>
+      <div class="auth-sub">Get instant access to your CRM.</div>
+      <div class="auth-err" id="signup-err"></div>
+      <div class="af-row" style="margin-bottom:0">
+        <div class="af"><label>First name</label><input id="s-first" type="text" placeholder="Jane" autocomplete="given-name" /></div>
+        <div class="af"><label>Last name</label><input id="s-last" type="text" placeholder="Smith" autocomplete="family-name" /></div>
+      </div>
+      <div class="af"><label>Email</label><input id="s-email" type="email" placeholder="you@example.com" autocomplete="email" /></div>
+      <div class="af">
+        <label>Password</label>
+        <input id="s-pass" type="password" placeholder="Min. 8 characters" autocomplete="new-password" oninput="pwStrength(this.value)" />
+        <div class="strength-bar"><div class="strength-fill" id="sf"></div></div>
+        <div class="strength-lbl" id="sl"></div>
+      </div>
+      <div class="af">
+        <label>Confirm password</label>
+        <input id="s-pass2" type="password" placeholder="Re-enter password" autocomplete="new-password" />
+        <div class="auth-err" id="pw-match-err" style="margin-top:6px;margin-bottom:0">Passwords do not match</div>
+      </div>
+      <button class="auth-btn" id="signup-btn" onclick="doSignup()">Create Account →</button>
+      <div class="auth-switch">Already have an account? <a onclick="show('scr-login')">Sign in</a></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ APP (shown only after sign-in) ══════════ -->
+<div id="app">
+
+  <!-- SIDEBAR (desktop) -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-row">
+        <div class="sb-logo-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <div class="sb-logo-name">Contractor Hub</div>
+          <div class="sb-logo-tag">Pro CRM Platform</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-lbl">Menu</div>
+      <button class="sb-btn on"        id="snav-contacts" onclick="go('contacts')"><span>👥</span> Contacts</button>
+      <button class="sb-btn leads-nav" id="snav-leads"    onclick="go('leads')">
+        <span>📣</span> Advertising Leads
+        <span class="sb-badge" id="sb-badge" style="display:none">0</span>
+      </button>
+      <button class="sb-btn"           id="snav-map"      onclick="go('map')"><span>🗺️</span> Map View</button>
+    </nav>
+
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-av">?</div>
+        <div style="min-width:0">
+          <div class="sb-uname"  id="sb-name">—</div>
+          <div class="sb-uemail" id="sb-email">—</div>
+        </div>
+      </div>
+      <div class="sb-stats">
+        <div class="stat-row"><span class="stat-lbl">Contacts</span><span class="stat-val g" id="st-c">0</span></div>
+        <div class="stat-row"><span class="stat-lbl">Ad leads</span><span class="stat-val o" id="st-l">0</span></div>
+        <div class="stat-row"><span class="stat-lbl">New leads</span><span class="stat-val"  id="st-n">0</span></div>
+        <div class="stat-row"><span class="stat-lbl">Qualified</span><span class="stat-val"  id="st-q">0</span></div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">🚪 Sign out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="tb-title">Contacts</div>
+
+      <!-- Desktop search + actions -->
+      <div class="search-wrap">
+        <span class="search-ico">🔍</span>
+        <input class="search-input" id="search-inp" type="text" placeholder="Search contacts…" oninput="onSearch(this.value)" />
+      </div>
+      <div class="tb-actions" id="tba-contacts">
+        <button class="btn btn-ghost"   onclick="expContactsCSV()">⬇ Export</button>
+        <button class="btn btn-primary" onclick="openAddContact()">+ Add Contact</button>
+      </div>
+      <div class="tb-actions" id="tba-leads" style="display:none">
+        <button class="btn btn-ghost" onclick="expLeadsCSV()">⬇ Export</button>
+        <button class="btn btn-ghost" onclick="addDemo()">🧪 Demo Lead</button>
+      </div>
+      <div class="tb-actions" id="tba-map" style="display:none"></div>
+
+      <!-- Mobile icon buttons (hidden on desktop) -->
+      <div class="mob-tb-btns" id="mob-btns">
+        <button class="mob-icon-btn" id="mob-search-btn" onclick="openMobSearch()" title="Search">🔍</button>
+        <button class="mob-icon-btn" id="mob-add-btn"    onclick="mobAdd()"        title="Add">＋</button>
+      </div>
+    </div>
+
+    <!-- Mobile inline search bar (hidden by default) -->
+    <div id="mob-search-wrap" style="display:none; padding:8px 14px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0;">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input id="mob-search-inp" type="search" placeholder="Search…"
+          style="flex:1;background:var(--surface);border:1.5px solid var(--accent-bright);border-radius:var(--r-sm);padding:9px 13px;color:var(--text);font-family:var(--fb);font-size:15px;outline:none;-webkit-appearance:none;"
+          oninput="onSearch(this.value)" />
+        <button onclick="closeMobSearch()"
+          style="color:var(--accent-bright);font-size:14px;font-weight:600;border:none;background:none;cursor:pointer;font-family:var(--fb);white-space:nowrap;padding:0 4px;">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTACTS PANEL -->
+    <div class="panel on" id="pnl-contacts">
+      <div class="scroll">
+        <div class="cards-grid" id="contacts-grid"></div>
+        <div class="empty" id="c-empty" style="display:none">
+          <div class="empty-ico">📇</div>
+          <div class="empty-title">No contacts yet</div>
+          <div class="empty-sub">Tap + to add your first contact.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADS PANEL -->
+    <div class="panel" id="pnl-leads">
+      <div class="leads-wrap">
+        <div class="live-banner">
+          <div class="live-dot"></div>
+          <span><strong>Tally connected.</strong> New submissions appear automatically.</span>
+          <span id="poll-status" style="margin-left:auto;font-size:11px;opacity:.65">Syncing…</span>
+        </div>
+        <div class="filters-row">
+          <button class="filt on" onclick="filtLeads('all',this)">All</button>
+          <button class="filt"    onclick="filtLeads('new',this)">🟠 New</button>
+          <button class="filt"    onclick="filtLeads('contacted',this)">🔵 Contacted</button>
+          <button class="filt"    onclick="filtLeads('qualified',this)">🟢 Qualified</button>
+          <button class="filt"    onclick="filtLeads('closed',this)">🟣 Closed</button>
+          <button class="filt"    onclick="filtLeads('lost',this)">🔴 Lost</button>
+          <span class="leads-count" id="leads-ct">0 leads</span>
+        </div>
+        <div class="scroll">
+          <div class="leads-grid" id="leads-grid"></div>
+          <div class="empty" id="l-empty" style="display:none">
+            <div class="empty-ico">📣</div>
+            <div class="empty-title">Waiting for leads</div>
+            <div class="empty-sub">Tally form is connected. Submissions appear here automatically.</div>
+            <button class="btn btn-ghost" style="margin-top:10px" onclick="addDemo()">🧪 Try Demo Lead</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP PANEL -->
+    <div class="panel" id="pnl-map">
+      <div class="map-wrap">
+        <iframe src="https://www.google.com/maps/d/embed?mid=1ZEfP9RI0s9Q4A2DrDRyeQbX8v6_3pVY"
+          allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="My Map"></iframe>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM TAB BAR (mobile only) -->
+  <nav class="btab-bar" id="btab-bar">
+    <button class="btab on"        id="btab-contacts" onclick="go('contacts')">
+      <span class="btab-icon">👥</span><span>Contacts</span>
+    </button>
+    <button class="btab leads-tab" id="btab-leads"    onclick="go('leads')">
+      <span class="btab-icon">📣</span><span>Leads</span>
+      <span class="btab-badge" id="btab-badge" style="display:none">0</span>
+    </button>
+    <button class="btab"           id="btab-map"      onclick="go('map')">
+      <span class="btab-icon">🗺️</span><span>Map</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- MODAL: ADD/EDIT CONTACT -->
+<div class="overlay" id="ov-contact" onclick="ovClick(event,'ov-contact')">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-title" id="ct-modal-title">Add Contact</div></div>
+      <button class="xbtn" onclick="closeOv('ov-contact')">✕</button>
+    </div>
+    <input type="hidden" id="edit-id" />
+    <div class="fr">
+      <div class="fg"><label>First Name</label><input class="fi" id="f-first" placeholder="Jane" /></div>
+      <div class="fg"><label>Last Name</label> <input class="fi" id="f-last"  placeholder="Smith" /></div>
+    </div>
+    <div class="fg"><label>Email</label>  <input class="fi" id="f-email"   type="email" placeholder="jane@example.com" /></div>
+    <div class="fg"><label>Phone</label>  <input class="fi" id="f-phone"   type="tel"   placeholder="(555) 000-0000" /></div>
+    <div class="fg"><label>Address</label><input class="fi" id="f-address" placeholder="123 Main St" /></div>
+    <div class="fr">
+      <div class="fg"><label>City</label>      <input class="fi" id="f-city"  placeholder="San Diego" /></div>
+      <div class="fg"><label>State / Zip</label><input class="fi" id="f-state" placeholder="CA 92101" /></div>
+    </div>
+    <div class="fg"><label>Notes</label><textarea class="fi" id="f-notes" placeholder="Any notes…"></textarea></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost"   onclick="closeOv('ov-contact')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveContact()">Save Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: LEAD DETAIL -->
+<div class="overlay" id="ov-lead" onclick="ovClick(event,'ov-lead')">
+  <div class="modal wide">
+    <div class="modal-hd">
+      <div><div class="modal-title" id="ld-name">Lead</div><div class="modal-sub" id="ld-time"></div></div>
+      <button class="xbtn" onclick="closeOv('ov-lead')">✕</button>
+    </div>
+    <div id="ld-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" onclick="delCurLead()">🗑 Delete</button>
+      <button class="btn btn-ghost"  onclick="closeOv('ov-lead')">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════ SCRIPT ══════════ -->
+<script>
+'use strict';
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+async function hashPw(p) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p + 'ch_2024'));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+const getUsers   = () => JSON.parse(localStorage.getItem('crm_users')   || '[]');
+const getSession = () => JSON.parse(localStorage.getItem('crm_session') || 'null');
+const saveUsers  = u => localStorage.setItem('crm_users',   JSON.stringify(u));
+const saveSess   = s => localStorage.setItem('crm_session', JSON.stringify(s));
+const clearSess  = () => localStorage.removeItem('crm_session');
+
+function show(id) {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  ['login-err','signup-err','pw-match-err'].forEach(e => {
+    const el=document.getElementById(e); if(el){el.classList.remove('on');el.textContent='';}
+  });
+}
+
+function authErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.classList.add('on'); }
+
+function pwStrength(p) {
+  let s=0;
+  if(p.length>=8)s++; if(p.length>=12)s++; if(/[A-Z]/.test(p))s++; if(/[0-9]/.test(p))s++; if(/[^A-Za-z0-9]/.test(p))s++;
+  const lvl=[{w:'0%',c:'transparent',t:''},{w:'25%',c:'#ff5f5f',t:'Weak'},{w:'50%',c:'#ff8c42',t:'Fair'},{w:'75%',c:'#fbbc04',t:'Good'},{w:'100%',c:'#52b788',t:'Strong'}][Math.min(s,4)];
+  const f=document.getElementById('sf'), l=document.getElementById('sl');
+  f.style.width=lvl.w; f.style.background=lvl.c; l.textContent=lvl.t; l.style.color=lvl.c;
+}
+
+async function doSignup() {
+  const first=document.getElementById('s-first').value.trim();
+  const last =document.getElementById('s-last').value.trim();
+  const email=document.getElementById('s-email').value.trim().toLowerCase();
+  const pass =document.getElementById('s-pass').value;
+  const pass2=document.getElementById('s-pass2').value;
+  document.getElementById('signup-err').classList.remove('on');
+  document.getElementById('pw-match-err').classList.remove('on');
+  if(!first||!last)       { authErr('signup-err','Enter your full name.'); return; }
+  if(!email.includes('@')){ authErr('signup-err','Enter a valid email.'); return; }
+  if(pass.length<8)       { authErr('signup-err','Password must be 8+ characters.'); return; }
+  if(pass!==pass2)        { document.getElementById('pw-match-err').classList.add('on'); return; }
+  const users=getUsers();
+  if(users.find(u=>u.email===email)){ authErr('signup-err','Account with this email already exists.'); return; }
+  const btn=document.getElementById('signup-btn');
+  btn.disabled=true; btn.textContent='Creating…';
+  const hash=await hashPw(pass);
+  const user={id:uid(), firstName:first, lastName:last, email, hash, created:Date.now()};
+  users.push(user); saveUsers(users);
+  const sess={userId:user.id, email, firstName:first, lastName:last, loginTime:Date.now()};
+  saveSess(sess); btn.disabled=false; btn.textContent='Create Account →';
+  launchApp(sess);
+}
+
+async function doLogin() {
+  const email=document.getElementById('l-email').value.trim().toLowerCase();
+  const pass =document.getElementById('l-pass').value;
+  document.getElementById('login-err').classList.remove('on');
+  if(!email||!pass){ authErr('login-err','Enter your email and password.'); return; }
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true; btn.textContent='Signing in…';
+  const hash=await hashPw(pass);
+  const user=getUsers().find(u=>u.email===email&&u.hash===hash);
+  btn.disabled=false; btn.textContent='Sign In →';
+  if(!user){ authErr('login-err','Incorrect email or password.'); return; }
+  const sess={userId:user.id, email, firstName:user.firstName, lastName:user.lastName, loginTime:Date.now()};
+  saveSess(sess); launchApp(sess);
+}
+
+function doLogout() {
+  clearSess();
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('auth').classList.remove('gone');
+  show('scr-login');
+  document.getElementById('l-email').value='';
+  document.getElementById('l-pass').value='';
+}
+
+function launchApp(sess) {
+  document.getElementById('auth').classList.add('gone');
+  document.getElementById('app').classList.add('on');
+  // Sidebar user info
+  const ini=(sess.firstName?.[0]||'')+(sess.lastName?.[0]||'');
+  document.getElementById('sb-av').textContent    = ini.toUpperCase()||'?';
+  document.getElementById('sb-name').textContent  = sess.firstName+' '+sess.lastName;
+  document.getElementById('sb-email').textContent = sess.email;
+  initCRM();
+}
+
+// ── CRM ───────────────────────────────────────────────────────────────────────
+let contacts=[], leads=[], legend=[], curLeadId=null, curTab='contacts', cSearch='', lFilter='all', lSearch='';
+
+const PAL=['#d4f564','#64c8f5','#f564a9','#f5a664','#a664f5','#64f5b4','#f5e664','#5bf5c8','#64a8f5','#f5c864'];
+const ST={
+  new:      {label:'🟠 New',       cls:'s-new'},
+  contacted:{label:'🔵 Contacted', cls:'s-contacted'},
+  qualified:{label:'🟢 Qualified', cls:'s-qualified'},
+  closed:   {label:'🟣 Closed',    cls:'s-closed'},
+  lost:     {label:'🔴 Lost',      cls:'s-lost'},
+};
+const SC={new:'#ff8c42',contacted:'#60a5fa',qualified:'#52b788',closed:'#a78bfa',lost:'#ff5f5f'};
+
+function uid()  { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function esc(s) { return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function aCol(s){ let h=0; for(const c of(s||'?'))h=(h*31+c.charCodeAt(0))&0x7fffffff; return PAL[h%PAL.length]; }
+function ini(a,b){ return ((a?.[0]||'')+(b?.[0]||'')).toUpperCase()||'?'; }
+function ago(ts){ const s=(Date.now()-ts)/1000; if(s<60)return'Just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return new Date(ts).toLocaleDateString(); }
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function saveCon() { localStorage.setItem('crm_contacts',JSON.stringify(contacts)); stats(); }
+function saveLds() { localStorage.setItem('crm_leads',   JSON.stringify(leads));    stats(); }
+
+function stats() {
+  const nw=leads.filter(l=>l.status==='new').length;
+  const qu=leads.filter(l=>l.status==='qualified').length;
+  const setT=(id,v)=>{ const e=document.getElementById(id); if(e)e.textContent=v; };
+  setT('st-c',contacts.length); setT('st-l',leads.length); setT('st-n',nw); setT('st-q',qu);
+  // badges
+  ['sb-badge','btab-badge'].forEach(id=>{ const e=document.getElementById(id); if(e){e.textContent=nw;e.style.display=nw>0?'':'none';} });
+}
+
+function initCRM() {
+  contacts = JSON.parse(localStorage.getItem('crm_contacts')||'[]');
+  leads    = JSON.parse(localStorage.getItem('crm_leads')   ||'[]');
+  legend   = JSON.parse(localStorage.getItem('crm_legend')  ||'null') || [
+    {color:'#e84141',label:'Active Job Site'},
+    {color:'#4285f4',label:'Estimate Sent'},
+    {color:'#34a853',label:'Completed Project'},
+    {color:'#fbbc04',label:'Follow-up Needed'},
+    {color:'#9c27b0',label:'VIP / Priority Client'},
+    {color:'#ff7043',label:'Advertising Lead'},
+  ];
+  stats(); renderContacts();
+  setTimeout(poll,800); setInterval(poll,15000);
+}
+
+// ── TAB NAVIGATION ─────────────────────────────────────────────────────────
+function go(tab) {
+  curTab=tab; cSearch=''; lSearch='';
+  // Panels
+  ['contacts','leads','map'].forEach(t=>{
+    document.getElementById('pnl-'+t).classList.toggle('on',t===tab);
+  });
+  // Sidebar nav
+  ['contacts','leads','map'].forEach(t=>{
+    const b=document.getElementById('snav-'+t); if(b){b.classList.toggle('on',t===tab);}
+  });
+  document.getElementById('snav-leads').classList.toggle('leads-nav',true);
+  // Bottom tabs
+  ['contacts','leads','map'].forEach(t=>{
+    const b=document.getElementById('btab-'+t); if(b){b.classList.toggle('on',t===tab);}
+  });
+  document.getElementById('btab-leads').classList.toggle('leads-tab',true);
+  // Topbar
+  document.getElementById('tb-title').textContent={contacts:'Contacts',leads:'Advertising Leads',map:'Map View'}[tab];
+  // Desktop actions
+  ['contacts','leads','map'].forEach(t=>{
+    const e=document.getElementById('tba-'+t); if(e)e.style.display=t===tab?'flex':'none';
+  });
+  // Search
+  const si=document.getElementById('search-inp'); if(si){si.value=''; si.placeholder=tab==='leads'?'Search leads…':'Search contacts…';}
+  // Mobile search
+  closeMobSearch();
+  // Mobile add button label
+  const mb=document.getElementById('mob-add-btn');
+  if(mb) mb.textContent=tab==='contacts'?'＋':tab==='leads'?'🧪':'✏';
+  // Mobile search btn visibility
+  const ms=document.getElementById('mob-search-btn');
+  if(ms) ms.style.display=(tab==='map')?'none':'flex';
+  if(tab==='leads')renderLeads();
+}
+
+function onSearch(v) {
+  if(curTab==='contacts'){cSearch=v;renderContacts();}
+  if(curTab==='leads')   {lSearch=v;renderLeads();}
+}
+
+// ── MOBILE SEARCH / ADD ─────────────────────────────────────────────────────
+function openMobSearch(){
+  const w=document.getElementById('mob-search-wrap');
+  w.style.display=''; setTimeout(()=>{document.getElementById('mob-search-inp').focus();},60);
+}
+function closeMobSearch(){
+  const w=document.getElementById('mob-search-wrap'); if(w)w.style.display='none';
+  const i=document.getElementById('mob-search-inp'); if(i)i.value='';
+  onSearch('');
+}
+function mobAdd(){
+  if(curTab==='contacts')openAddContact();
+  else if(curTab==='leads')addDemo();
+}
+
+
+// ── CONTACTS ────────────────────────────────────────────────────────────────
+function renderContacts(){
+  const grid=document.getElementById('contacts-grid');
+  const empty=document.getElementById('c-empty');
+  const term=cSearch.toLowerCase();
+  const list=contacts.filter(c=>`${c.first} ${c.last} ${c.email} ${c.phone} ${c.address} ${c.city} ${c.state} ${c.notes}`.toLowerCase().includes(term));
+  if(!contacts.length){grid.innerHTML='';empty.style.display='flex';return;}
+  empty.style.display='none';
+  if(!list.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--text-3)">No contacts match "<strong style="color:var(--text-2)">${esc(cSearch)}</strong>"</div>`;return;}
+  grid.innerHTML=list.map((c,i)=>{
+    const col=aCol(c.first+c.last), in2=ini(c.first,c.last);
+    const adr=[c.address,c.city,c.state].filter(Boolean).join(', ');
+    return `<div class="contact-card" style="animation-delay:${Math.min(i*.04,.3)}s" onclick="editContact('${esc(c.id)}')">
+      <div class="card-hd">
+        <div class="avatar" style="background:${col}">${in2}</div>
+        <div style="flex:1;min-width:0">
+          <div class="card-name">${esc(c.first)} ${esc(c.last)}</div>
+          ${c.email?`<div class="card-email">${esc(c.email)}</div>`:''}
+        </div>
+        <div class="card-acts" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="editContact('${esc(c.id)}')">✏️</button>
+          <button class="icon-btn del" onclick="delContact('${esc(c.id)}')">🗑</button>
+        </div>
+      </div>
+      <div class="card-info">
+        ${c.phone?`<div class="info-row"><span style="color:var(--text-3);font-size:11px">📞</span>${esc(c.phone)}</div>`:''}
+        ${adr?`<div class="info-row"><span style="color:var(--text-3);font-size:11px">📍</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(adr)}</span></div>`:''}
+      </div>
+      ${c.notes?`<div class="card-notes">${esc(c.notes)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openAddContact(){
+  document.getElementById('ct-modal-title').textContent='Add Contact';
+  document.getElementById('edit-id').value='';
+  ['first','last','email','phone','address','city','state','notes'].forEach(k=>document.getElementById('f-'+k).value='');
+  openOv('ov-contact'); setTimeout(()=>document.getElementById('f-first').focus(),80);
+}
+function editContact(id){
+  const c=contacts.find(x=>x.id===id);if(!c)return;
+  document.getElementById('ct-modal-title').textContent='Edit Contact';
+  document.getElementById('edit-id').value=id;
+  ['first','last','email','phone','address','city','state','notes'].forEach(k=>document.getElementById('f-'+k).value=c[k]||'');
+  openOv('ov-contact');
+}
+function saveContact(){
+  const first=document.getElementById('f-first').value.trim();
+  const last= document.getElementById('f-last').value.trim();
+  if(!first&&!last){toast('⚠️ Enter at least a name');return;}
+  const id=document.getElementById('edit-id').value;
+  const d={id:id||uid(),first,last,
+    email:document.getElementById('f-email').value.trim(),
+    phone:document.getElementById('f-phone').value.trim(),
+    address:document.getElementById('f-address').value.trim(),
+    city:document.getElementById('f-city').value.trim(),
+    state:document.getElementById('f-state').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(),
+    created:id?(contacts.find(c=>c.id===id)?.created||Date.now()):Date.now(),
+  };
+  if(id){const i=contacts.findIndex(c=>c.id===id);if(i!==-1)contacts[i]=d;toast('✅ Contact updated');}
+  else{contacts.unshift(d);toast('✅ Contact added');}
+  saveCon();renderContacts();closeOv('ov-contact');
+}
+function delContact(id){
+  if(!confirm('Delete this contact?'))return;
+  contacts=contacts.filter(c=>c.id!==id);saveCon();renderContacts();toast('🗑 Deleted');
+}
+function expContactsCSV(){
+  if(!contacts.length){toast('No contacts to export');return;}
+  const h=['First','Last','Email','Phone','Address','City','State','Notes'];
+  const rows=contacts.map(c=>[c.first,c.last,c.email,c.phone,c.address,c.city,c.state,c.notes].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  dlCSV('contacts.csv',[h.join(','),...rows].join('\n'));toast('⬇️ Exported');
+}
+
+// ── LEADS ────────────────────────────────────────────────────────────────────
+function renderLeads(){
+  const grid=document.getElementById('leads-grid');
+  const empty=document.getElementById('l-empty');
+  const term=lSearch.toLowerCase();
+  let list=leads.filter(l=>{
+    if(lFilter!=='all'&&l.status!==lFilter)return false;
+    if(term){const s=`${l.name} ${l.email} ${l.phone} ${JSON.stringify(l.fields||{})}`.toLowerCase();if(!s.includes(term))return false;}
+    return true;
+  });
+  document.getElementById('leads-ct').textContent=`${list.length} lead${list.length!==1?'s':''}`;
+  if(!leads.length){grid.innerHTML='';empty.style.display='flex';return;}
+  empty.style.display='none';
+  if(!list.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--text-3)">No leads match this filter.</div>`;return;}
+  grid.innerHTML=list.map((l,i)=>{
+    const st=ST[l.status]||ST.new;
+    const col=aCol(l.name||l.email||'?');
+    const in2=ini((l.name||'?').split(' ')[0],(l.name||'').split(' ')[1]||'');
+    const extras=Object.entries(l.fields||{}).slice(0,3);
+    return `<div class="lead-card ${st.cls}" style="animation-delay:${Math.min(i*.04,.3)}s">
+      <div class="lead-top">
+        <div style="display:flex;align-items:center;gap:9px;flex:1;min-width:0">
+          <div class="avatar" style="background:${col};width:34px;height:34px;font-size:12px;flex-shrink:0">${in2}</div>
+          <div style="min-width:0">
+            <div class="lead-name">${esc(l.name||l.email||'Anonymous')}</div>
+            <div class="lead-time">${ago(l.receivedAt)}</div>
+          </div>
+        </div>
+        <div class="lead-sw">
+          <button class="sbadge ${st.cls}" onclick="togSMenu(event,'${esc(l.id)}')">${st.label} ▾</button>
+          <div class="status-menu" id="sm-${esc(l.id)}" style="display:none">
+            ${Object.entries(ST).map(([k,v])=>`<div class="smopt" onclick="setSt('${esc(l.id)}','${k}',event)"><div class="sdot" style="background:${SC[k]}"></div>${v.label}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="lead-fields">
+        ${l.email?`<div class="lf"><span class="lfi">✉️</span><span class="lfv">${esc(l.email)}</span></div>`:''}
+        ${l.phone?`<div class="lf"><span class="lfi">📞</span><span class="lfv">${esc(l.phone)}</span></div>`:''}
+        ${extras.map(([k,v])=>`<div class="lf"><span class="lfi">💬</span><span class="lfv"><strong style="color:var(--text-3)">${esc(k)}:</strong> ${esc(String(v).slice(0,80))}${String(v).length>80?'…':''}</span></div>`).join('')}
+      </div>
+      <div class="lead-foot">
+        <span class="lead-src">📣 Tally Form</span>
+        <div style="display:flex;gap:3px">
+          <button class="icon-btn" onclick="openLead('${esc(l.id)}')">👁</button>
+          <button class="icon-btn del" onclick="delLead('${esc(l.id)}')">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('click',e=>{if(!e.target.closest('.lead-sw'))document.querySelectorAll('.status-menu').forEach(m=>m.style.display='none');});
+function togSMenu(e,id){e.stopPropagation();const m=document.getElementById('sm-'+id);const was=m.style.display!=='none';document.querySelectorAll('.status-menu').forEach(x=>x.style.display='none');if(!was)m.style.display='block';}
+function setSt(id,s,e){e.stopPropagation();const l=leads.find(x=>x.id===id);if(!l)return;l.status=s;saveLds();renderLeads();toast(`✅ ${ST[s].label}`);}
+function filtLeads(f,btn){lFilter=f;document.querySelectorAll('.filt').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderLeads();}
+function openLead(id){
+  const l=leads.find(x=>x.id===id);if(!l)return;curLeadId=id;
+  document.getElementById('ld-name').textContent=l.name||l.email||'Anonymous';
+  document.getElementById('ld-time').textContent=`Received ${ago(l.receivedAt)}`;
+  const st=ST[l.status]||ST.new;
+  const all=Object.entries(l.fields||{});
+  document.getElementById('ld-body').innerHTML=`
+    <div style="margin-bottom:14px"><span class="sbadge ${st.cls}" style="cursor:default">${st.label}</span></div>
+    <div class="fr" style="margin-bottom:12px">
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Name</div><div style="font-size:14px;color:var(--text)">${esc(l.name)||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Email</div><div style="font-size:14px;color:var(--text)">${esc(l.email)||'—'}</div></div>
+    </div>
+    <div class="fr" style="margin-bottom:12px">
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Phone</div><div style="font-size:14px;color:var(--text)">${esc(l.phone)||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Received</div><div style="font-size:14px;color:var(--text)">${new Date(l.receivedAt).toLocaleString()}</div></div>
+    </div>
+    ${all.length?`<div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">All Responses</div>
+    <div class="all-resp">${all.map(([k,v])=>`<div class="rrow"><div class="rq">${esc(k)}</div><div class="ra">${esc(String(v))}</div></div>`).join('')}</div>`:''}`;
+  openOv('ov-lead');
+}
+function delCurLead(){if(!curLeadId||!confirm('Delete?'))return;leads=leads.filter(l=>l.id!==curLeadId);saveLds();renderLeads();closeOv('ov-lead');toast('🗑 Deleted');}
+function delLead(id){if(!confirm('Delete this lead?'))return;leads=leads.filter(l=>l.id!==id);saveLds();renderLeads();toast('🗑 Deleted');}
+function expLeadsCSV(){
+  if(!leads.length){toast('No leads');return;}
+  const keys=[...new Set(leads.flatMap(l=>Object.keys(l.fields||{})))];
+  const h=['Name','Email','Phone','Status','Received',...keys];
+  const rows=leads.map(l=>[l.name,l.email,l.phone,l.status,new Date(l.receivedAt).toLocaleString(),...keys.map(k=>l.fields?.[k]||'')].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  dlCSV('leads.csv',[h.join(','),...rows].join('\n'));toast('⬇️ Exported');
+}
+function addDemo(){
+  const names=['Alex Johnson','Maria Garcia','Sam Patel','Jordan Smith','Riley Chen','Morgan Davis'];
+  const svcs =['Roof repair','Kitchen remodel','Plumbing leak','HVAC service','Electrical panel','Bathroom reno'];
+  const buds =['Under $1,000','$1,000–$5,000','$5,000–$15,000','$15,000+'];
+  const when =['ASAP','Within a week','Within a month','Just getting quotes'];
+  const n=names[Math.floor(Math.random()*names.length)];
+  const l={id:`demo_${uid()}`,source:'Demo',receivedAt:Date.now(),status:'new',name:n,
+    email:n.toLowerCase().replace(' ','.')+rnd(10,99)+'@gmail.com',
+    phone:`(${rnd(200,999)}) ${rnd(200,999)}-${rnd(1000,9999)}`,
+    fields:{'Service Needed':svcs[rnd(0,5)],'Budget':buds[rnd(0,3)],'Timeline':when[rnd(0,3)],'Notes':'Saw your ad — interested in a quote!'}};
+  leads.unshift(l);saveLds();
+  if(curTab!=='leads')go('leads');else renderLeads();
+  toast('🧪 Demo lead added');
+}
+
+// ── TALLY WEBHOOK POLLING ────────────────────────────────────────────────────
+function normLead(raw){
+  if(raw.id&&raw.receivedAt&&raw.fields&&!Array.isArray(raw.fields))
+    return{id:raw.id,source:raw.source||'Tally Form',receivedAt:raw.receivedAt,status:raw.status||'new',name:raw.name||'',email:raw.email||'',phone:raw.phone||'',fields:raw.fields||{}};
+  const data=raw.data||raw,fields=data.fields||raw.fields||[];
+  const l={id:raw.id||`tally_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,source:data.formName||'Tally Form',receivedAt:raw.receivedAt||Date.now(),status:'new',name:'',email:'',phone:'',fields:{}};
+  if(Array.isArray(fields))fields.forEach(f=>{
+    const lbl=(f.label||f.key||'').trim();
+    let val=Array.isArray(f.value)?f.value.join(', '):String(f.value??'').trim();
+    if(!lbl||!val)return;
+    const low=lbl.toLowerCase();
+    if(!l.name&&(low.includes('name')||low==='full name'))l.name=val;
+    if(!l.email&&low.includes('email'))l.email=val;
+    if(!l.phone&&(low.includes('phone')||low.includes('mobile')||low.includes('tel')))l.phone=val;
+    l.fields[lbl]=val;
+  });
+  if(!l.name&&(data.name||raw.name))l.name=data.name||raw.name;
+  if(!l.email&&(data.email||raw.email))l.email=data.email||raw.email;
+  if(!l.phone&&(data.phone||raw.phone))l.phone=data.phone||raw.phone;
+  return l;
+}
+function ingest(raw){
+  const l=normLead(raw);if(!l.id||leads.some(x=>x.id===l.id))return false;
+  const byEmail=l.email&&leads.find(x=>x.email===l.email);
+  if(byEmail&&byEmail.status!=='new')l.status=byEmail.status;
+  leads.unshift(l);return true;
+}
+function onNew(n){if(n<=0)return;saveLds();if(curTab==='leads')renderLeads();toast(`📣 ${n} new lead${n>1?'s':''} received!`);}
+let pollBusy=false;
+async function poll(){
+  if(pollBusy)return;pollBusy=true;
+  try{
+    const since=leads.length?Math.max(...leads.map(l=>l.receivedAt||0)):0;
+    const res=await fetch(`/api/tally-webhook?since=${since}&t=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok)return;
+    const j=await res.json();
+    if(Array.isArray(j.leads)&&j.leads.length){let a=0;j.leads.forEach(l=>{if(ingest(l))a++;});onNew(a);}
+    const ps=document.getElementById('poll-status');if(ps)ps.textContent=`Synced ${new Date().toLocaleTimeString()}`;
+  }catch(e){console.warn('[poll]',e.message);}finally{pollBusy=false;}
+}
+
+
+// ── MODALS ───────────────────────────────────────────────────────────────────
+function openOv(id){document.getElementById(id).classList.add('on');}
+function closeOv(id){document.getElementById(id).classList.remove('on');}
+function ovClick(e,id){if(e.target.id===id)closeOv(id);}
+
+// ── CSV ──────────────────────────────────────────────────────────────────────
+function dlCSV(name,content){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/csv'}));a.download=name;a.click();}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+let _tt;
+function toast(msg){document.querySelector('.toast')?.remove();clearTimeout(_tt);const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);_tt=setTimeout(()=>el.remove(),3000);}
+
+// ── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')document.querySelectorAll('.overlay.on').forEach(o=>o.classList.remove('on'));
+  if((e.metaKey||e.ctrlKey)&&e.key==='n'&&document.getElementById('app').classList.contains('on')){e.preventDefault();openAddContact();}
+  if(e.key==='Enter'){
+    const ls=document.getElementById('scr-login'),ss=document.getElementById('scr-signup');
+    if(ls?.classList.contains('active'))doLogin();
+    else if(ss?.classList.contains('active'))doSignup();
+  }
+});
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+(function boot(){
+  const s=getSession();
+  if(s?.userId) launchApp(s);
+  // else auth screen is already visible by default
+})();
+</script>
+</body>
+</html>
